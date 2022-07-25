@@ -1,0 +1,2 @@
+# Correspondências OD
+A separação das Zonas OD segue uma classificação especial, adequando-se melhor ao intuito da pesquisa original. Entretando, para a geração dos mapas é mais fácil utilizarmos as divisões políticas de Distritos e Subprefeituras da cidade de São Paulo.
