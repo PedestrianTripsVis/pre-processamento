@@ -4,12 +4,22 @@ import geopandas as gpd
 import pyproj
 import rasterio as rio
 from rasterio.warp import calculate_default_transform, reproject, Resampling
-import os
 
-MAPS_DIR='../maps/'
-RASTER_DIR = "../raster_maps/"
-JAWG_ACCESS_TOKEN="laGXnA7M9QfsEnrAWGVe1HSfgDF9ghAYeVn9bbTKLl7ClITmEUUCb1qKbQffeXnJ"
-ESRI_ACCESS_TOKEN="AAPKa9fe3755a9f149e8957319837fc2a4e10P_k8HkiTW2z7MzIZgCVtDrMSMfNmRQrQe9wea2DLCTZfiDL-nTsQth4zmk2C9G1"
+# Loading env variables
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
+# Default settings 
+JAWG_ACCESS_TOKEN = os.environ.get("JAWG_ACCESS_TOKEN")
+ESRI_ACCESS_TOKEN = os.environ.get("ESRI_ACCESS_TOKEN")
+CRS = pyproj.CRS({'proj': 'longlat', 'ellps': 'WGS84', 'no_defs': True})      
+AREAS = ['Se', 'Pinheiros', 'Mooca', 'Lapa', 'Vila_Mariana']
+MAPS_DIR='./maps'
+RASTER_DIR = "./raster_maps"
 
 def read_shape(shapefile):
     # Read the shapefile pointed in the spec.json
@@ -59,30 +69,26 @@ def reproject_raster(in_path, out_path, dst_crs, bounds):
     return out_path
 
 
-areas = ['Se', 'Campo_Limpo', 'MBoi_Mirim', 'Penha']
-crs = pyproj.CRS({'proj': 'longlat', 'ellps': 'WGS84', 'no_defs': True})      
+if __name__ == '__main__':
+    maps_dir = input("Maps dir: ").strip()
+    maps_dir = maps_dir if maps_dir else MAPS_DIR
 
-for area in areas:
-    read_shape(f'{MAPS_DIR}{area}/{area}.shp')
+    raster_dir = input("Maps dir: ").strip()
+    raster_dir = raster_dir if raster_dir else RASTER_DIR
 
-    db = gpd.read_file(f"{MAPS_DIR}{area}_modified/{area}_modified.shp")
-    db.to_crs({'init': 'epsg:3857'}, inplace=True)
+    areas = input("Data to process (use space to divide files): ").strip()
+    areas = [a for a in areas.split(' ') if a]
+    
+    areas = areas if areas else AREAS
 
-    w, s, e, n = db.total_bounds
-    # img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.CartoDB.Positron)
-   
-    # JAWG
-    # img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.Jawg.Streets(accessToken=JAWG_ACCESS_TOKEN))
-    # img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.Jawg.Sunny(accessToken=JAWG_ACCESS_TOKEN))
-    # img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.Jawg.Light(accessToken=JAWG_ACCESS_TOKEN))
-   
-    # img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.OpenStreetMap.France)
+    # If there is no input data, use default 
+    for area in areas:
+        read_shape(f'{maps_dir}/{area}/{area}.shp')
 
-    # ESRI
-    # img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.Esri.WorldTopoMap(accessToken=ESRI_ACCESS_TOKEN))
-    img, ext = cx.bounds2raster(w, s, e, n, f"{RASTER_DIR}{area}.tiff", source=xyz.Esri.WorldStreetMap(accessToken=ESRI_ACCESS_TOKEN))
+        db = gpd.read_file(f"{maps_dir}/{area}_modified/{area}_modified.shp")
+        db.to_crs({'init': 'epsg:3857'}, inplace=True)
 
-    reproject_raster(f"{RASTER_DIR}{area}.tiff", f"{RASTER_DIR}{area}_modified.tiff", crs, db.total_bounds)
+        w, s, e, n = db.total_bounds
+        img, ext = cx.bounds2raster(w, s, e, n, f"{raster_dir}/{area}.tiff", source=xyz.Esri.WorldStreetMap(accessToken=ESRI_ACCESS_TOKEN))
 
-
-
+        reproject_raster(f"{raster_dir}/{area}.tiff", f"{raster_dir}/{area}_modified.tiff", CRS, db.total_bounds)

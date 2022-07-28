@@ -1,23 +1,20 @@
-# General Imports
-from functools import reduce
-import sys
 import geopandas as gpd #pip install geopandas descartes
 import pandas as pd #pip install pandas
 import matplotlib.pyplot as plt # pip install matplotlib
 import numpy as np
 from pyproj import Proj, transform
 
-from multiprocessing import Pool
-from dbfread import DBF #pip install dbfread
-from simpledbf import Dbf5 #pip install simpledbf
-
 # Local imports
-sys.path.append('/home/milenacsilva/Área de Trabalho/pedestrian-trips')
+import sys
+sys.path.append('/home/milenacsilva/Área de Trabalho/ic/pre-processamento')
 import scripts.utils as utils
+
+REDUCTION_FACTOR = 5
+AREAS = ['Se', 'Pinheiros', 'Mooca', 'Lapa', 'Vila_Mariana']
+DATA_DIR = 'dados/subprefeituras-mas/'
 
 def process_data(YEAR, DATASETS_DIR, MY_DATASET):
     trips = pd.read_csv(f'{DATASETS_DIR}{MY_DATASET}')
-
 
     trips_count = len(trips)
 
@@ -25,15 +22,12 @@ def process_data(YEAR, DATASETS_DIR, MY_DATASET):
     df.plot.bar(x='Year', y='Entries Count', rot=0)
     print("Number of entries in %s dataset: %s", YEAR, trips_count)
 
-
     CHECK_ORIGIN_ATTRIBUTE = [x.__contains__('FE_VIA') for x in [trips.columns]]
 
     if not(trips.columns.__contains__('FE_VIA')):
         raise Exception("Error, the dataset does not uses FE_VIA as attribute name.")
 
     print("There is missing data 'FE_VIA' attribute?:", not(all(trips[['FE_VIA']].notna().values)))
-
-
 
     incomplete_trips = trips[trips['FE_VIA'].isna()]
 
@@ -108,13 +102,7 @@ def process_data(YEAR, DATASETS_DIR, MY_DATASET):
 
     trips.dropna(subset=['DESTINATION_ID'], inplace=True)
 
-
-
-
-
     trips.groupby(by=['ORIGIN_ID', 'DESTINATION_ID']).sum()[['FE_VIA']].sort_values(by=['FE_VIA', 'ORIGIN_ID', 'DESTINATION_ID']).describe()
-
-
 
     total_trips = trips[['FE_VIA']].sum()[0]
     print("Total expanded trips: ", total_trips)
@@ -125,9 +113,6 @@ def process_data(YEAR, DATASETS_DIR, MY_DATASET):
     edges_weights = edges_weights.groupby(by='FE_VIA').sum().reset_index()
     edges_weights[['PERCENTUAL_VALUE']] = edges_weights[['PERCENTUAL_VALUE']].cumsum()
     edges_weights.plot.bar(x='FE_VIA',y='PERCENTUAL_VALUE', figsize=(16,8))
-
-
-    REDUCTION_FACTOR = 5
 
     reduced_trips = trips.copy().loc[trips['FE_VIA'] >= REDUCTION_FACTOR]
     reduced_trips['FE_VIA'] = reduced_trips['FE_VIA'].div(REDUCTION_FACTOR).astype(int)
@@ -190,8 +175,15 @@ def process_data(YEAR, DATASETS_DIR, MY_DATASET):
     file_path = results_dir + '/' + MY_DATASET
     utils.parse_to_cubu(expanded_trips.copy(), file_path, cubu_fields)
 
-areas = ['Se', 'Campo_Limpo', 'MBoi_Mirim', 'Penha']
-for a in areas:
-    a = a.replace(' ', '_').replace('/', '_')
-    process_data(2017, 'dados/subprefeituras-por-genero/fem/', f"{a}.csv")
+if __name__ == '__main__':
+    data_dir = input("Data dir: ").strip()
+    data_dir = data_dir if data_dir else DATA_DIR
+
+    areas = input("Data to process (use space to divide files): ").strip()
+    areas = [a for a in areas.split(' ') if a]
+    
+    # If there is no input data, use default 
+    areas = areas if areas else AREAS
+    for a in areas:
+        process_data(2017, data_dir, f"{a}.csv")
 
