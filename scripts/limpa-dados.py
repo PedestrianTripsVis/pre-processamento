@@ -11,7 +11,7 @@ import scripts.utils as utils
 
 REDUCTION_FACTOR = 5
 AREAS = ['Se', 'Pinheiros', 'Mooca', 'Lapa', 'Vila_Mariana']
-DATA_DIR = 'dados/subprefeituras-mas/'
+DATA_DIR = './entrada/dados/subprefeituras/'
 
 def process_data(YEAR, DATASETS_DIR, MY_DATASET):
     trips = pd.read_csv(f'{DATASETS_DIR}{MY_DATASET}')
@@ -161,7 +161,8 @@ def process_data(YEAR, DATASETS_DIR, MY_DATASET):
         'LAT_O': 'CO_O_Y',
         'LON_D': 'CO_D_X',
         'LAT_D': 'CO_D_Y',
-        'MODOPRIN': 'MODOPRIN'
+        'MODOPRIN': 'MODOPRIN',
+        'SEXO': 'SEXO'
     }
 
     results_dir = DATASETS_DIR + 'processed'

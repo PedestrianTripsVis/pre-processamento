@@ -45,7 +45,7 @@ def parse_to_cubu(trips, path, cubu_fields):
     trips.reset_index(inplace=True, drop=True)
     trips.insert(1, 'IDX', [str(x) + ':' for x in list(trips.index)])
 
-    fields = ['IDX', 'MODOPRIN', 'DEPARTURE_TIME', 'ARRIVAL_TIME', 'LON_O', 'LAT_O', 'LON_D', 'LAT_D']
+    fields = ['IDX', 'MODOPRIN', 'DEPARTURE_TIME', 'ARRIVAL_TIME', 'SEXO', 'LON_O', 'LAT_O', 'LON_D', 'LAT_D']
     for f in fields[1:]:
         if cubu_fields.keys().__contains__(f):
             trips.rename(columns = {cubu_fields[f]: f}, inplace=True)

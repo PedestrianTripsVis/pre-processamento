@@ -18,8 +18,8 @@ JAWG_ACCESS_TOKEN = os.environ.get("JAWG_ACCESS_TOKEN")
 ESRI_ACCESS_TOKEN = os.environ.get("ESRI_ACCESS_TOKEN")
 CRS = pyproj.CRS({'proj': 'longlat', 'ellps': 'WGS84', 'no_defs': True})      
 AREAS = ['Se', 'Pinheiros', 'Mooca', 'Lapa', 'Vila_Mariana']
-MAPS_DIR='./maps'
-RASTER_DIR = "./raster_maps"
+MAPS_DIR='./entrada/maps'
+RASTER_DIR = "./entrada/raster_maps"
 
 def read_shape(shapefile):
     # Read the shapefile pointed in the spec.json
@@ -89,6 +89,6 @@ if __name__ == '__main__':
         db.to_crs({'init': 'epsg:3857'}, inplace=True)
 
         w, s, e, n = db.total_bounds
-        img, ext = cx.bounds2raster(w, s, e, n, f"{raster_dir}/{area}.tiff", source=xyz.Esri.WorldStreetMap(accessToken=ESRI_ACCESS_TOKEN))
+        img, ext = cx.bounds2raster(w, s, e, n, f"{raster_dir}/{area}.tiff", source=xyz.Jawg.Dark(accessToken=JAWG_ACCESS_TOKEN))
 
         reproject_raster(f"{raster_dir}/{area}.tiff", f"{raster_dir}/{area}_modified.tiff", CRS, db.total_bounds)
